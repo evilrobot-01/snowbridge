@@ -219,7 +219,7 @@ contract BeefyClient is Ownable {
 
         // Check if merkle proof is valid based on the validatorSetRoot
         require(
-            isValidatorInSet(vset, proof.addr, proof.index, proof.merkleProof),
+            isValidatorInSet(vset, proof.addr, proof.merkleProof),
             "invalid validator proof"
         );
 
@@ -450,7 +450,7 @@ contract BeefyClient is Ownable {
             Bitfield.clear(bitfield, element, within);
 
             // Check if merkle proof is valid
-            require(isValidatorInSet(vset, addr, index, merkleProof), "invalid validator proof");
+            require(isValidatorInSet(vset, addr, merkleProof), "invalid validator proof");
 
             // Check if signature is correct
             require(ECDSA.recover(commitmentHash, signature.v, signature.r, signature.s) == addr, "Invalid signature");
@@ -484,25 +484,24 @@ contract BeefyClient is Ownable {
     /**
      * @dev Checks if a validators address is a member of the merkle tree
      * @param addr The address of the validator to check
-     * @param index The index of the validator to check, starting at 0
      * @param proof Merkle proof required for validation of the address
      * @return true if the validator is in the set
      */
     function isValidatorInSet(
         ValidatorSet memory vset,
         address addr,
-        uint256 index,
         bytes32[] calldata proof
     ) internal pure returns (bool) {
-        bytes32 hashedLeaf = keccak256(abi.encodePacked(addr));
-        return
-            MerkleProof.verifyMerkleLeafAtPosition(
-                vset.root,
-                hashedLeaf,
-                index,
-                vset.length,
-                proof
-            );
+        bytes32 hash = keccak256(abi.encodePacked(addr));
+        for (uint256 i = 0; i < proof.length; i++) {
+            if (proof[i] < hash) {
+                hash = keccak256(abi.encodePacked(proof[i], hash));
+            } else {
+                hash = keccak256(abi.encodePacked(hash, proof[i]));
+            }
+        }
+
+        return vset.root == hash;
     }
 
     /**
