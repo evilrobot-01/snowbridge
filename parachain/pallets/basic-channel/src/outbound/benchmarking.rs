@@ -20,7 +20,7 @@ benchmarks! {
 
 		for _ in 0 .. m {
 			let payload: Vec<u8> = (0..).take(p as usize).collect();
-			<MessageQueue<T>>::try_append(EnqueuedMessage {
+			<MessageQueue<T>>::try_append(Message {
 				account: account("", 0, 0),
 				message: Message {
 					id: 0u64,
